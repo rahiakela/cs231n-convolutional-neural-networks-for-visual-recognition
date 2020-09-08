@@ -132,7 +132,7 @@ class TwoLayerNet(object):
         denom = np.sum(np.exp(scores), axis=1)
         mask = (np.exp(Z2) / denom.reshape(scores.shape[0], 1))
         mask[range(N), y] = - (denom - num) / denom
-        mask /= num
+        mask /= N
         grads['W2'] = A1.T.dot(mask) + reg * W2
         grads['b2'] = np.sum(mask, axis=0)  # mask.dot(np.ones((mask.shape[1],1)))
         PD = mask.dot(W2.T)
