@@ -306,55 +306,55 @@ class FullyConnectedNet(object):
                 scores, cache = dropout_forward(scores, self.dropout_param)
                 cache_history.append(cache)
             L2reg += np.sum(self.params['W%d' % (i + 1)] ** 2)
-            i += 1
-            scores, cache = affine_forward(scores, self.params['W%d' % (i + 1)], self.params['b%d' % (i + 1)])
-            cache_history.append(cache)
-            L2reg += np.sum(self.params['W%d' % (i + 1)] ** 2)
-            L2reg *= 0.5 * self.reg
+        i += 1
+        scores, cache = affine_forward(scores, self.params['W%d' % (i + 1)], self.params['b%d' % (i + 1)])
+        cache_history.append(cache)
+        L2reg += np.sum(self.params['W%d' % (i + 1)] ** 2)
+        L2reg *= 0.5 * self.reg
 
-            # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-            ############################################################################
-            #                             END OF YOUR CODE                             #
-            ############################################################################
+        # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        ############################################################################
+        #                             END OF YOUR CODE                             #
+        ############################################################################
 
-            # If test mode return early
-            if mode == 'test':
-                return scores
+        # If test mode return early
+        if mode == 'test':
+            return scores
 
-            loss, grads = 0.0, {}
-            ############################################################################
-            # TODO: Implement the backward pass for the fully-connected net. Store the #
-            # loss in the loss variable and gradients in the grads dictionary. Compute #
-            # data loss using softmax, and make sure that grads[k] holds the gradients #
-            # for self.params[k]. Don't forget to add L2 regularization!               #
-            #                                                                          #
-            # When using batch/layer normalization, you don't need to regularize the scale   #
-            # and shift parameters.                                                    #
-            #                                                                          #
-            # NOTE: To ensure that your implementation matches ours and you pass the   #
-            # automated tests, make sure that your L2 regularization includes a factor #
-            # of 0.5 to simplify the expression for the gradient.                      #
-            ############################################################################
-            # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        loss, grads = 0.0, {}
+        ############################################################################
+        # TODO: Implement the backward pass for the fully-connected net. Store the #
+        # loss in the loss variable and gradients in the grads dictionary. Compute #
+        # data loss using softmax, and make sure that grads[k] holds the gradients #
+        # for self.params[k]. Don't forget to add L2 regularization!               #
+        #                                                                          #
+        # When using batch/layer normalization, you don't need to regularize the scale   #
+        # and shift parameters.                                                    #
+        #                                                                          #
+        # NOTE: To ensure that your implementation matches ours and you pass the   #
+        # automated tests, make sure that your L2 regularization includes a factor #
+        # of 0.5 to simplify the expression for the gradient.                      #
+        ############################################################################
+        # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            loss, dout = softmax_loss(scores, y)
-            loss += L2reg
-            dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)] = affine_backward(dout, cache_history.pop())
+        loss, dout = softmax_loss(scores, y)
+        loss += L2reg
+        dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)] = affine_backward(dout, cache_history.pop())
+        grads['W%d' % (i + 1)] += self.reg * self.params['W%d' % (i + 1)]
+        i -= 1
+        while i >= 0:
+            if self.use_dropout:
+                dout = dropout_backward(dout, cache_history.pop())
+            if self.normalization == 'batchnorm':
+                dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)], grads['gamma%d' % (i + 1)], grads[
+                    'beta%d' % (i + 1)] = affine_bn_relu_backward(dout, cache_history.pop())
+            if self.normalization == 'layernorm':
+                dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)], grads['gamma%d' % (i + 1)], grads[
+                    'beta%d' % (i + 1)] = affine_ln_relu_backward(dout, cache_history.pop())
+            else:
+                dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)] = affine_relu_backward(dout, cache_history.pop())
             grads['W%d' % (i + 1)] += self.reg * self.params['W%d' % (i + 1)]
             i -= 1
-            while i >= 0:
-                if self.use_dropout:
-                    dout = dropout_backward(dout, cache_history.pop())
-                if self.normalization == 'batchnorm':
-                    dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)], grads['gamma%d' % (i + 1)], grads[
-                        'beta%d' % (i + 1)] = affine_bn_relu_backward(dout, cache_history.pop())
-                if self.normalization == 'layernorm':
-                    dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)], grads['gamma%d' % (i + 1)], grads[
-                        'beta%d' % (i + 1)] = affine_ln_relu_backward(dout, cache_history.pop())
-                else:
-                    dout, grads['W%d' % (i + 1)], grads['b%d' % (i + 1)] = affine_relu_backward(dout, cache_history.pop())
-                grads['W%d' % (i + 1)] += self.reg * self.params['W%d' % (i + 1)]
-                i -= 1
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
