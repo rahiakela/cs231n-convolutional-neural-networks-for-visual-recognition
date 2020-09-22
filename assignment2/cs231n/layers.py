@@ -140,7 +140,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     Forward pass for batch normalization.
 
     During training the sample mean and (uncorrected) sample variance are
-    computed from minibatch statistics and used to normalize the incoming data.
+    computed from mini-batch statistics and used to normalize the incoming data.
     During training we also keep an exponentially decaying running mean of the
     mean and variance of each feature, and these averages are used to normalize
     data at test-time.
@@ -386,7 +386,25 @@ def layernorm_forward(x, gamma, beta, ln_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x = x.T
+
+    # calculate mean
+    mu = np.mean(x, axis=0)
+    num = x - mu            # nominator
+    square_mu = num ** 2    # denominator
+
+    # calculate variance
+    var = np.mean(square_mu, axis=0)
+    sqrt_var = np.sqrt(var + eps)
+    inverse_var = 1 / sqrt_var
+
+    # calculate norm
+    norm = num * inverse_var
+    norm = norm.T
+    scale_norm = gamma * norm
+    shift_norm = scale_norm + beta
+    out = shift_norm
+    cache = (beta, gamma, norm, num, var, eps, sqrt_var)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -420,8 +438,26 @@ def layernorm_backward(dout, cache):
     # still apply!                                                            #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    beta, gamma, norm, num, var, eps, std = cache
+    _, D = dout.shape
 
-    pass
+    dbeta = np.sum(dout, axis=0)
+    dgamma = np.sum(dout * norm, axis=0)
+    dout = dout.T
+
+    dscale_norm = gamma.reshape(dout.shape[0]) * dout
+    dnorm_up = 1 / np.sqrt(var + eps) * dscale_norm
+
+    # down branch
+    dnorm_down = np.sum(num * dscale_norm, axis=0)
+    dinverse_var = dnorm_down * - 1 / (np.sqrt(var + eps)) ** 2
+    dsqrt_var = 0.5 / np.sqrt(var + eps) * dinverse_var
+    dvar = np.ones(dout.shape) * dsqrt_var / D
+    dsquare_mu = 2 * num * dvar
+    dnum = dsquare_mu + dnorm_up
+    dmu = 1 / D * np.ones(dout.shape) * - np.sum(dnum, axis=0)
+    dx = dnum + dmu
+    dx = dx.T
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

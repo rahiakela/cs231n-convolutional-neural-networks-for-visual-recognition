@@ -240,8 +240,18 @@ class FullyConnectedNet(object):
         self.bn_params = []
         if self.normalization == 'batchnorm':
             self.bn_params = [{'mode': 'train'} for i in range(self.num_layers - 1)]
+            self.params['gamma1'] = np.ones(hidden_dims[0])
+            self.params['beta1'] = np.zeros(hidden_dims[0])
+            for i in range(self.num_layers - 2):
+                self.params['gamma' + str(i + 2)] = np.ones(hidden_dims[i + 1])
+                self.params['beta' + str(i + 2)] = np.zeros(hidden_dims[i + 1])
         if self.normalization == 'layernorm':
             self.bn_params = [{} for i in range(self.num_layers - 1)]
+            self.params['gamma1'] = np.ones(hidden_dims[0])
+            self.params['beta1'] = np.zeros(hidden_dims[0])
+            for i in range(self.num_layers - 2):
+                self.params['gamma' + str(i + 2)] = np.ones(hidden_dims[i + 1])
+                self.params['beta' + str(i + 2)] = np.zeros(hidden_dims[i + 1])
 
         # Cast all parameters to the correct datatype
         for k, v in self.params.items():
