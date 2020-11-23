@@ -578,10 +578,9 @@ def conv_forward_naive(x, w, b, conv_param):
       - 'stride': The number of pixels between adjacent receptive fields in the
         horizontal and vertical directions.
       - 'pad': The number of pixels that will be used to zero-pad the input. 
-        
 
     During padding, 'pad' zeros should be placed symmetrically (i.e equally on both sides)
-    along the height and width axes of the input. Be careful not to modfiy the original
+    along the height and width axes of the input. Be careful not to modify the original
     input x directly.
 
     Returns a tuple of:
@@ -597,7 +596,29 @@ def conv_forward_naive(x, w, b, conv_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+
+    # input data
+    N, C, H, W = x.shape
+    # Filter weights
+    F, C, HH, WW = w.shape
+
+    H_n = int(1 + (H + 2 * pad - HH) / stride)
+    W_n = int(1 + (W + 2 * pad - WW) / stride)
+
+    # padding calculation
+    X_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), "constant", constant_values=0)
+    out = np.zeros((N, F, H_n, W_n))
+
+    for i in range(N):
+        for j in range(H_n):
+            for k in range(W_n):
+                for f in range(F):
+                    X_i = X_pad[i]
+                    input_conv = X_i[:, j * stride: j * stride + HH, k * stride: k * stride + WW]
+                    output_conv = (input_conv * w[f, :, :, :]).sum() + b[f]
+                    out[i, f, j, k] = output_conv
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
