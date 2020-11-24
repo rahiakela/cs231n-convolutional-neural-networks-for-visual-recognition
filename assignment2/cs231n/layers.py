@@ -611,6 +611,7 @@ def conv_forward_naive(x, w, b, conv_param):
     X_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), "constant", constant_values=0)
     out = np.zeros((N, F, H_n, W_n))
 
+    # forward operation
     for i in range(N):
         for j in range(H_n):
             for k in range(W_n):
@@ -647,7 +648,36 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, w, b, conv_param = cache
+
+    # input data
+    N, C, H, W = x.shape
+    # Filter weights
+    F, C, HH, WW = w.shape
+
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+
+    # # padding calculation
+    x_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=0)
+
+    H_n = 1 + (H + 2 * pad - HH) // stride
+    W_n = 1 + (W + 2 * pad - WW) // stride
+
+    dx_pad = np.zeros_like(x_pad)
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+
+    # backward operation
+    for n in range(N):
+        for f in range(F):
+            db[f] += dout[n, f].sum()
+            for j in range(0, H_n):
+                for i in range(0, W_n):
+                    dw[f] += x_pad[n, :, j * stride:j * stride + HH, i * stride:i * stride + WW] * dout[n, f, j, i]
+                    dx_pad[n, :, j * stride:j * stride + HH, i * stride:i * stride + WW] += w[f] * dout[n, f, j, i]
+    dx = dx_pad[:, :, pad:pad + H, pad:pad + W]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
