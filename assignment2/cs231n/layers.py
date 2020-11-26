@@ -711,7 +711,23 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    pool_height = pool_param["pool_height"]
+    pool_width = pool_param["pool_width"]
+    stride = pool_param["stride"]
+
+    # calculate pooling to height and width
+    H_n = int(1 + (H - pool_height) / stride)
+    W_n = int(1 + (W - pool_width) / stride)
+
+    out = np.zeros((N, C, H_n, W_n))
+
+    for i in range(N):
+        for j in range(H_n):
+            for k in range(W_n):
+                for l in range(C):
+                    x_max = x[i, l, stride * j: stride * j + pool_height, stride * k: stride * k + pool_width]
+                    out[i, l, j, k] = np.amax(x_max)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -738,7 +754,25 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, pool_param = cache
+    N, C, H, W = x.shape
+    pool_height = pool_param["pool_height"]
+    pool_width = pool_param["pool_width"]
+    stride = pool_param["stride"]
+
+    # calculate pooling to height and width
+    H_n = int(1 + (H - pool_height) / stride)
+    W_n = int(1 + (W - pool_width) / stride)
+
+    dx = np.zeros_like(x)
+
+    for i in range(N):
+        for j in range(H_n):
+            for k in range(W_n):
+                for l in range(C):
+                    index = np.argmax(x[i, l, stride * j: stride * j + pool_height, stride * k: stride * k + pool_width])
+                    index_1, index_2 = np.unravel_index(index, (pool_height, pool_width))
+                    dx[i, l, stride * j: stride * j + pool_height, stride * k: stride * k + pool_width][index_1, index_2] = dout[i, l, j, k]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
